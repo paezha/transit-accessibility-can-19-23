@@ -62,6 +62,7 @@ format:
       - \usepackage{float}
       - \floatplacement{table}{H}
       - \floatplacement{figure}{H}
+  docx: default
   #trb-pdf: 
   #  keep-tex: true   
 execute: 
