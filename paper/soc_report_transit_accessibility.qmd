@@ -298,9 +298,6 @@ Within this context, this report examines changes in transit accessibility both 
  
 ```{r} 
 #| label: prepare_df_transit 
-#| echo: false 
-#| message: false 
-#| warning: false 
 
 df_transit <- transit_statistics |>  
   mutate(date = REF_DATE, 
@@ -312,7 +309,6 @@ df_transit <- transit_statistics |>
 #| fig-cap: "Transit revenue and ridership in Canada, pre- and post- first-wave COVID-19 pandemic." 
 #| fig-subcap: Data source @governmentofcanada2024 
 #| out-width: 100% 
-#| echo: false 
  
 df_transit |> 
          filter(GEO == "Canada") |>
@@ -338,7 +334,6 @@ The study areas for this work consist of the 12 largest urban regions across Can
 ```{r} 
 #| label: tbl-table_1 
 #| tbl-cap: "Census Metropolitan Areas (CMAs) by Population and Transit Modes" 
-#| echo: false 
  
 population_statistics |>
   filter(year == "2021") |>
@@ -382,7 +377,8 @@ Finally, we assigned travel weights to each destination’s travel time accordin
  
 ```{r} 
 #| label: prepare_toronto_impedance_plot 
-#| echo: false 
+#| include: false
+
 impedance_df <- tidyr::expand_grid( 
   study_region_name = study_region_names_list, 
   travel_time_p50 = seq(0, 120, by = 1), 
@@ -472,16 +468,6 @@ access_employ_2023 <- travel_matrix_employ |>
   filter(start_year == 2023) |>
   group_by(from_id) |> 
   summarise(S_i = sum(f*Total_Emp))
-
-# #inspect:
-# access_employ_2019$S_i |> summary()
-# access_employ_2023$S_i |> summary()
-# 
-# #also adding per capita spatial accessibility 
-# spatial_mea_employ_2019_DA <- spatial_mea_employ_2019_DA |> left_join(access_employ_2019, by="from_id") |>
-#   mutate(s_i = S_i/Population)
-# spatial_mea_employ_2023_DA <- spatial_mea_employ_2023_DA |> left_join(access_employ_2023, by="from_id") |>
-#   mutate(s_i = S_i/Population)
 ```
 
 ```{r}
@@ -510,15 +496,6 @@ access_grocers_2023 <- travel_matrix_grocer |>
   filter(start_year == 2023) |>
   group_by(from_id) |> 
   summarise(S_i = sum(f*o_j))
-
-# #also adding per capita spatial accessibility 
-# spatial_mea_grocers_2019_DA <- spatial_mea_grocers_2019_DA |> 
-#   left_join(access_grocers_2019, 
-#             by="from_id") |>
-#   mutate(s_i = S_i/Population)
-# spatial_mea_grocers_2023_DA <- spatial_mea_grocers_2023_DA |> 
-#   left_join(access_grocers_2023, by="from_id") |>
-#   mutate(s_i = S_i/Population)
 ```
 
 ```{r}
@@ -586,6 +563,7 @@ census_data_da_emp <- census_data_da |>
 
 ```{r}
 #| label: prepare table with accessibility to groceries
+
 census_data_da_groc <-  census_data_da |> 
   select(GeoUID,
          region,
@@ -636,6 +614,7 @@ census_data_da_groc <-  census_data_da |>
 ```{r}
 #| label: plot and save fig-S_i_groc_change_map 
 #| cache: true
+#| include: false
 
 census_data_da_groc_sf <- census_data_da_groc |> 
   drop_na(S_i_change) |> 
@@ -643,39 +622,42 @@ census_data_da_groc_sf <- census_data_da_groc |>
   sf::st_cast("MULTIPOLYGON") |> 
   sf::st_cast("POLYGON")
 
-S_i_groc_change_map <- tm_shape(census_data_da_groc_sf) + tm_fill(col = "grey") +
-      tm_shape(region_backgrounds) + tm_fill(col = "grey95") +
-      tm_shape(census_data_cma) + tm_fill(col = "grey90") +
-      tm_shape(census_data_da_groc_sf) +
-      tm_fill(
-        col = "S_i_change",
-        style = "fisher",
-        n = 10,
-        midpoint = 0,
-        palette = "RdYlGn",
-        title = "Change in \nGrocery Store \nAccess (%)",
-        colorNA = NULL,
-        showNA = FALSE
-      ) +
-      tm_facets(by = "study_region_name",
-                free.coords = TRUE,
-                ncol = 3) +
-      tm_scale_bar(
-        position = c("right", "bottom"),
-        text.color = "black",
-        breaks = c(0, 5, 10)
-      ) +
-      tm_layout(
-        #bg.color = "#1E2323",
-        outer.bg.color = "white",
-        #title = y,
-        #legend.text.color = "white",
-        legend.format = list(digits = 2),
-        title.color = "white",
-        between.margin = 0.2,
-        panel.label.bg.color = "white",
-        #panel.label.color = "white"
-        frame = TRUE)
+S_i_groc_change_map <- tm_shape(census_data_da_groc_sf) + 
+  tm_fill(col = "grey") +
+  tm_shape(region_backgrounds) + 
+  tm_fill(col = "grey95") +
+  tm_shape(census_data_cma) + 
+  tm_fill(col = "grey90") +
+  tm_shape(census_data_da_groc_sf) +
+  tm_fill(
+    col = "S_i_change",
+    style = "fisher",
+    n = 10,
+    midpoint = 0,
+    palette = "RdYlGn",
+    title = "Change in \nGrocery Store \nAccess (%)",
+    colorNA = NULL,
+    showNA = FALSE
+  ) +
+  tm_facets(by = "study_region_name",
+            free.coords = TRUE,
+            ncol = 3) +
+  tm_scale_bar(
+    position = c("right", "bottom"),
+    text.color = "black",
+    breaks = c(0, 5, 10)
+  ) +
+  tm_layout(
+    #bg.color = "#1E2323",
+    outer.bg.color = "white",
+    #title = y,
+    #legend.text.color = "white",
+    legend.format = list(digits = 2),
+    title.color = "white",
+    between.margin = 0.2,
+    panel.label.bg.color = "white",
+    #panel.label.color = "white"
+    frame = TRUE)
 
 tmap_save(S_i_groc_change_map, 
           filename = glue::glue(here::here(),
@@ -699,6 +681,7 @@ knitr::include_graphics(glue::glue(here::here(),
 ```{r}
 #| label: plot and save fig-S_i_emp_change_map 
 #| cache: true
+#| include: false
 
 census_data_da_emp_sf <- census_data_da_emp |> 
   drop_na(S_i_change) |> 
@@ -706,39 +689,42 @@ census_data_da_emp_sf <- census_data_da_emp |>
   sf::st_cast("MULTIPOLYGON") |> 
   sf::st_cast("POLYGON")
 
-S_i_emp_change_map <- tm_shape(census_data_da_emp_sf) + tm_fill(col = "grey") +
-      tm_shape(region_backgrounds) + tm_fill(col = "grey95") +
-      tm_shape(census_data_cma) + tm_fill(col = "grey90") +
-      tm_shape(census_data_da_emp_sf) +
-      tm_fill(
-        col = "S_i_change",
-        style = "fisher",
-        n = 10,
-        midpoint = 0,
-        palette = "RdYlGn",
-        title = "Change in \nEmployment \nAccess (%)",
-        colorNA = NULL,
-        showNA = FALSE
-      ) +
-      tm_facets(by = "study_region_name",
-                free.coords = TRUE,
-                ncol = 3) +
-      tm_scale_bar(
-        position = c("right", "bottom"),
-        text.color = "black",
-        breaks = c(0, 5, 10)
-      ) +
-      tm_layout(
-        #bg.color = "#1E2323",
-        outer.bg.color = "white",
-        #title = y,
-        #legend.text.color = "white",
-        legend.format = list(digits = 2),
-        title.color = "white",
-        between.margin = 0.2,
-        panel.label.bg.color = "white",
-        #panel.label.color = "white"
-        frame = TRUE)
+S_i_emp_change_map <- tm_shape(census_data_da_emp_sf) + 
+  tm_fill(col = "grey") +
+  tm_shape(region_backgrounds) + 
+  tm_fill(col = "grey95") +
+  tm_shape(census_data_cma) + 
+  tm_fill(col = "grey90") +
+  tm_shape(census_data_da_emp_sf) +
+  tm_fill(
+    col = "S_i_change",
+    style = "fisher",
+    n = 10,
+    midpoint = 0,
+    palette = "RdYlGn",
+    title = "Change in \nEmployment \nAccess (%)",
+    colorNA = NULL,
+    showNA = FALSE
+  ) +
+  tm_facets(by = "study_region_name",
+            free.coords = TRUE,
+            ncol = 3) +
+  tm_scale_bar(
+    position = c("right", "bottom"),
+    text.color = "black",
+    breaks = c(0, 5, 10)
+  ) +
+  tm_layout(
+    #bg.color = "#1E2323",
+    outer.bg.color = "white",
+    #title = y,
+    #legend.text.color = "white",
+    legend.format = list(digits = 2),
+    title.color = "white",
+    between.margin = 0.2,
+    panel.label.bg.color = "white",
+    #panel.label.color = "white"
+    frame = TRUE)
 
 tmap_save(S_i_emp_change_map, 
           filename = glue::glue(here::here(),
@@ -752,8 +738,7 @@ tmap_save(S_i_emp_change_map,
 #| label: fig-S_i_emp_change_map 
 #| fig-cap: "Spatial distribution of changes in transit accessibility to employment by region, 2019 to 2023" 
 #| out-width: 100% 
-#| echo: false 
- 
+
 knitr::include_graphics(glue::glue(here::here(),
                                 "/figures/S_i_emp_change_map.jpg"))
 ``` 
@@ -774,22 +759,29 @@ options(scipen=10000)
  
  
 ```{r}
-#| label: create and save fig-S_i_groc_emp_change_density_plot 
+#| label: create and save fig-S_i_groc_emp_change_density_plot
+#| include: false 
 
 S_i_groc_emp_change_density_plot <- ggplot(census_data_da_emp_job |> 
-         filter(quintiles_region != "NA")
-         #mutate(access_change_groc = ifelse(access_change_groc > 50, 50, access_change_groc)) 
-       , aes(x = S_i_change, fill = type)) +
-  geom_density(aes(y=..count../100,weight=Population), alpha=0.65, col=NA) +
-  facet_wrap(~ study_region_name, scales = "free") +  # Facet by region
-  scale_fill_discrete(" ", type=c("lightseagreen","tan1"))+
+                                             filter(quintiles_region != "NA"),
+                                           aes(x = S_i_change, 
+                                               fill = type)) +
+  geom_density(aes(y = ..count../100,
+                   weight = Population), 
+               alpha=0.65, col=NA) +
+  facet_wrap(~ study_region_name, 
+             scales = "free") +  # Facet by region
+  scale_fill_discrete(" ", 
+                      type=c("lightseagreen",
+                             "tan1"))+
   labs(
     x = "Change in accessibility (%)",
     y = "Population (per million)"
   ) +
   theme_minimal() +
   scale_y_continuous(labels = scales::comma)+
-  scale_x_continuous(limits = c(-50, 50), labels = c(-50, -25, 0, 25, 50)) +
+  scale_x_continuous(limits = c(-50, 50), 
+                     labels = c(-50, -25, 0, 25, 50)) +
   theme(
     strip.text = element_text(size = 12),
     legend.position = "bottom"  # Removes legend since facetting is done by region
@@ -797,7 +789,7 @@ S_i_groc_emp_change_density_plot <- ggplot(census_data_da_emp_job |>
 
 ggsave(S_i_groc_emp_change_density_plot, 
        filename = glue::glue(here::here(),
-                                "/figures/S_i_groc_emp_change_density_plot.jpg"),
+                             "/figures/S_i_groc_emp_change_density_plot.jpg"),
        dpi = 300, 
        width = 8, 
        height = 6)
@@ -808,8 +800,7 @@ ggsave(S_i_groc_emp_change_density_plot,
 #| label: fig-S_i_groc_emp_change_density_plot 
 #| fig-cap: "Density plots of accessibility changes to employment and grocery stores by region, 2019 to 2023" 
 #| out-width: 100% 
-#| echo: false 
- 
+
 knitr::include_graphics(glue::glue(here::here(),
                                 "/figures/S_i_groc_emp_change_density_plot.jpg")) 
 ``` 
@@ -905,6 +896,16 @@ Robert Nutifafa Arku is a PhD Candidate in the Department of Geography and Plann
 Christopher Higgins is an Assistant Professor in the Department of Human Geography at the University of Toronto Scarborough and the Geography and Planning at the University of Toronto. His work uses geocomputational methods to explore the relationship between form and function in cities. Topical interests include accessibility and travel behaviour, spatio-temporal econometrics, health and wellbeing, and urban volumetrics. 
  
 Antonio Paez is a full professor in the School of Earth, Environment and Society at McMaster University, where he divides his time between teaching and researching, with a focus on transportation and spatial analysis. He is the 2024 recipient of the Edward L. Ullman Award of the Association of American Geographers, for his lifelong contributions to transportation geography. 
+
+# Open Science and Reproducibility
+
+This paper is a reproducible technical manuscript: the code and data needed to reproduce it are available in a publicly available repository:
+
+https://github.com/paezha/transit-accessibility-can-19-23
+
+The paper uses an Open Data Product [see @arribasbelopen_2021], package {canaccessR}, available here:
+
+https://paezha.github.io/canaccessR/
  
 # References 
  
