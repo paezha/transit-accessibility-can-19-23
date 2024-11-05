@@ -1,0 +1,913 @@
+--- 
+title: "Democratic access to our cities: the impacts of recent changes to transit services in major Canadian metropolitan areas" 
+author: 
+  - name: João Pedro Figueira Amorim Parga 
+    email: joao.parga@mail.utoronto.ca 
+    affiliations:  
+        - id: geoplan 
+          name: University of Toronto 
+          department: Department of Geography and Planning 
+          address: 100 St. George Street 
+          city: Toronto 
+          state: ON 
+          postal-code: M5S 3G3 
+    attributes: 
+        corresponding: true 
+  - name: Anastasia Soukhov 
+    email: soukhoa@mcmaster.ca 
+    affiliations: 
+        - id: mcmaster 
+          name: McMaster University 
+          department: School of Earth, Environment and Society 
+          address: 1280 Main Street West 
+          city: Hamilton 
+          state: ON 
+          postal-code: L8S 4K1 
+  - name: Robert Nutifafa Arku 
+    email: rn.arku@mail.utoronto.ca 
+    affiliations: 
+        - id: geoplan 
+  - name: Christopher D. Higgins 
+    email: cd.higgins@utoronto.ca 
+    affiliations: 
+        - id: utsc 
+          name: University of Toronto Scarborough 
+          department: Department of Human Geography 
+          address: 1265 Military Trail 
+          city: Toronto 
+          state: ON 
+          postal-code: M1C 1A4 
+  - name: Antonio Páez 
+    email: paezha@mcmaster.ca 
+    affiliations:  
+        - id: mcmaster 
+abstract: | 
+  Public transit services that connect the public to meaningful opportunities are essential for enabling democratic access to our cities. However, in recent decades, transit ridership has been plateauing across Canadian cities. Shock from the COVID-19 pandemic then set in, further altering public transit patterns through mobility restrictions, reduced service, and new remote workplace arrangements. At an aggregate level, the recent decline in transit ridership resulted in revenue losses for transit agencies and, sometimes, reduced transit service. Understanding how changes in transit services impact access to essential amenities is the first step in (re)building an equitable transportation system--one that enables access for all. In this work, we report changes in public transit service in Canada’s 12 largest census metro areas (CMAs), from pre- (2019) to post-pandemic mitigation periods (2023). An assessment of aggregate transit accessibility levels to jobs and groceries show how levels changed spatially and for people in different income levels. Changes in accessibility were not uniform across metropolitan areas. While some remained more or less unchanged, or even had greater accessibility in 2023, larger cities (Toronto, Montréal, and Vancouver) experienced higher losses in public transit accessibility, particularly in city centers during weekday mornings. Notably, areas in urban peripheries tended to see gains in accessibility. Residents were impacted differentially too, and we find that lower-income households were disproportionately affected by reduced accessibility. Our work highlights how changes in transit service levels impacted public transit accessibility to important destinations. Differences between metropolitan regions point to the important effect of municipal policy on this matter.
+
+keywords:  
+  - accessibility 
+  - food access 
+  - employment access 
+  - COVID-19 pandemic 
+  - public transit 
+  - public transit service
+  - transportation equity 
+date: last-modified 
+bibliography:
+  - "`r system('kpsewhich ../bibliography/references.bib', intern=TRUE)`"
+csl: http://www.zotero.org/styles/chicago-author-date-16th-edition
+format: 
+  pdf:  
+    header-includes:
+      - \usepackage{float}
+      - \floatplacement{table}{H}
+      - \floatplacement{figure}{H}
+  #trb-pdf: 
+  #  keep-tex: true   
+execute: 
+  echo: false
+  freeze: auto
+--- 
+ 
+```{r} 
+#| label: load packages 
+#| message: false 
+#| warning: false 
+ 
+library(canaccessR) # Data Package For Transit Accessibility Analysis in Selected Canadian Metropolitan Areas
+library(glue) # Interpreted String Literals
+library(gt) # Easily Create Presentation-Ready Display Tables 
+library(here) # A Simpler Way to Find Your Files
+library(sf) # Simple Features for R
+library(tidyverse) # Easily Install and Load the 'Tidyverse'
+library(tmap) # Thematic Maps
+``` 
+ 
+```{r} 
+#| label: load data and process data 
+#| echo: false 
+#| message: false 
+ 
+# Dissemination Areas
+data("census_data_da_cal")
+data("census_data_da_edm")
+data("census_data_da_ggh")
+data("census_data_da_hal")
+data("census_data_da_ldn")
+data("census_data_da_mtl")
+data("census_data_da_ott")
+data("census_data_da_que")
+data("census_data_da_van")
+data("census_data_da_win")
+
+# Census Metropolitan Areas
+data("census_data_cma_cal")
+data("census_data_cma_edm")
+data("census_data_cma_ggh")
+data("census_data_cma_hal")
+data("census_data_cma_ldn")
+data("census_data_cma_mtl")
+data("census_data_cma_ott")
+data("census_data_cma_que")
+data("census_data_cma_van")
+data("census_data_cma_win")
+
+# Tables with travel time to employment 
+data("travel_matrix_emp_cal")
+data("travel_matrix_emp_edm")
+data("travel_matrix_emp_ggh")
+data("travel_matrix_emp_hal")
+data("travel_matrix_emp_ldn")
+data("travel_matrix_emp_mtl")
+data("travel_matrix_emp_ott")
+data("travel_matrix_emp_que")
+data("travel_matrix_emp_van")
+data("travel_matrix_emp_win")
+
+# Tables with travel time to groceries 
+data("travel_matrix_grc_cal")
+data("travel_matrix_grc_edm")
+data("travel_matrix_grc_ggh")
+data("travel_matrix_grc_hal")
+data("travel_matrix_grc_ldn")
+data("travel_matrix_grc_mtl")
+data("travel_matrix_grc_ott")
+data("travel_matrix_grc_que")
+data("travel_matrix_grc_van")
+data("travel_matrix_grc_win")
+
+# Population statistics
+data("population_statistics")
+
+# Region backgrounds
+data("region_background_cal")
+data("region_background_edm")
+data("region_background_ggh")
+data("region_background_hal")
+data("region_background_ldn")
+data("region_background_mtl")
+data("region_background_ott")
+data("region_background_que")
+data("region_background_van")
+data("region_background_win")
+
+# Transit statistics
+data("transit_statistics")
+
+#table_1 <- read_csv("./data/table_1.csv") 
+#load("./data/grocers.rda") 
+#table_2 <- read_csv("./data/table_2.csv") 
+``` 
+
+```{r}
+#| label: bind tables
+
+# DAs
+census_data_da <- rbind(census_data_da_cal,
+                            census_data_da_edm,
+                            census_data_da_ggh,
+                            census_data_da_hal,
+                            census_data_da_ldn,
+                            census_data_da_mtl,
+                            census_data_da_ott,
+                            census_data_da_que,
+                            census_data_da_van,
+                            census_data_da_win)
+
+# CMAs
+census_data_cma <- rbind(census_data_cma_cal,
+                            census_data_cma_edm,
+                            census_data_cma_ggh,
+                            census_data_cma_hal,
+                            census_data_cma_ldn,
+                            census_data_cma_mtl,
+                            census_data_cma_ott,
+                            census_data_cma_que,
+                            census_data_cma_van,
+                            census_data_cma_win)
+
+# Region backgrounds
+region_backgrounds <- rbind(region_background_cal,
+                            region_background_edm,
+                            region_background_ggh,
+                            region_background_hal,
+                            region_background_ldn,
+                            region_background_mtl,
+                            region_background_ott,
+                            region_background_que,
+                            region_background_van,
+                            region_background_win)
+
+# Employment
+travel_matrix_employ <- bind_rows(travel_matrix_emp_cal,
+                                  travel_matrix_emp_edm,
+                                  travel_matrix_emp_ggh,
+                                  travel_matrix_emp_hal,
+                                  travel_matrix_emp_ldn,
+                                  travel_matrix_emp_mtl,
+                                  travel_matrix_emp_ott,
+                                  travel_matrix_emp_que,
+                                  travel_matrix_emp_van,
+                                  travel_matrix_emp_win)
+
+# Groceries
+travel_matrix_grocer <- bind_rows(travel_matrix_grc_cal,
+                                  travel_matrix_grc_edm,
+                                  travel_matrix_grc_ggh,
+                                  travel_matrix_grc_hal,
+                                  travel_matrix_grc_ldn,
+                                  travel_matrix_grc_mtl,
+                                  travel_matrix_grc_ott,
+                                  travel_matrix_grc_que,
+                                  travel_matrix_grc_van,
+                                  travel_matrix_grc_win)
+
+# Remove the individual tables
+rm(list=ls(pattern="census_data_da_"))
+rm(list=ls(pattern="census_data_cma_"))
+rm(list=ls(pattern="region_background_"))
+rm(list=ls(pattern="travel_matrix_emp_"))
+rm(list=ls(pattern="travel_matrix_grc_"))
+```
+
+```{r}
+#| label: study regions
+
+study_region_names_list <- c( 
+  "Toronto" = "35535",  
+  "Montréal" = "24462",  
+  "Vancouver" = "59933", 
+  "Calgary" = "48825", 
+  "Ottawa" = "505", 
+  "Edmonton" = "48835", 
+  "Québec City" = "24421", 
+  "Winnipeg" = "46602", 
+  "Hamilton" = "35537", 
+  "Waterloo" = "35541", 
+  "London" = "35555", 
+  #"Niagara" = "35539", 
+  "Halifax" = "12205", 
+  "Toronto" = "35532", 
+  "Vancouver" = "59932") |>  
+  enframe() |>  
+  select(2:1) |>  
+  deframe() 
+```
+ 
+ 
+```{r}
+#| label: list of DAs to omit
+
+da_omit_list <- c(
+  # halifax
+  "12090587", 
+  
+  # edmonton
+  "48112023", "48112054", "48111787", "48112030",
+  "48100389", "48100388", "48112083", "48112085",
+  "48112084", "48111549", "48111548", "48111846",
+  "48111842",
+  
+  # calgary
+  "48062018", "48062017", "48062021", "48062020", 
+  "48062441", "48061723", "48061722", "48061721", 
+  "48062440", "48062379", "48061964", "48061963", 
+  "48061901",
+  
+  # winnipeg
+  "46111095", "46100023", "46100025", "46100026", 
+  "46020073", "46020074", "46020156", "46020160", 
+  "46020162", "46120048", "46120047", "46120071", 
+  "46120045", "46120046", "46130126", "46130127"
+  )
+```
+
+# Introduction 
+ 
+Transportation accessibility can be defined as the potential offered by a transportation system to reach destinations [@paez2012]. In particular, public transportation plays an essential role to create more inclusive and sustainable transportation systems: it is a collective form of transportation that can be for all people but is especially important for those who cannot use or afford private vehicles. In this way, it is valuable not only economically, but also in contributing to democratized access to the city and its essential services [@nazariadli2018]. 
+ 
+Accessibility is an important concept in evaluating the benefits of transit; asking who benefits from it is a question of equity. Recent explorations and applications of theories of justice to the domain of transportation have identified accessibility as the main benefit of transportation systems [@pereira2016]--as opposed to simply the ease of movement for vehicles. An equitable and just transportation system is one that provides accessibility to all individuals, regardless of their socioeconomic characteristics. And a public transit systems that provides accessibility to different groups without large inequalities is the link between the transportation system and a democratic right to the city. 
+
+However, public transportation in Canada has been through substantial changes recently.  
+
+While transit ridership was generally strong in Canadian cities after the turn of the century, there are indications that ridership counts were leveling-off or declining in the pre-pandemic period [@diab2020]. Furthermore, restrictions and changing work arrangements associated with COVID-19 contributed to further declines in service levels and ridership [@harris2021]. While other modes of transportation have regained their pre-pandemic levels [@negm2024], as of February 2024, transit revenue and ridership in Canada continued to lag at -9.34% and -19.39% below their pre-2020 peak respectively [@governmentofcanada2024], and current trends suggest a divergence in ridership and revenue in the post-pandemic period (@fig-ridership-revenue). Concerningly, transit ridership losses paired with fare increases and service decreases may result in a vicious cycle, commonly known as the transit “death spiral” [@redelmeier2024]. 
+ 
+Avoiding a death spiral is important, as an underfunded and underdeveloped transit system can deepen automobile dependency and exacerbate inequalities in access to opportunities. Moreover, the reduction of service levels derived from the pandemic, or the possibility of the transit death spiral, would be detrimental to Canada’s aspirations as an inclusive society. The reductions in transit service levels could result in an insufficient provision of an essential service to the population, one which is necessary for people to fulfill their basic needs and access other services. As such, these changes following pandemic restrictions are tied to the gap between the infrastructure available to Canadians in basic areas, such as transportation, and the needs of a modern, equitable society. Crucially, our equity needs are also tied to the country's goals to meet its sustainability goals in the future. 
+
+Within this context, this report examines changes in transit accessibility both before and after the pandemic, and who was impacted. More concretely, we compare changes in transit accessibility levels for weekday morning access to employment and weekend afternoon access to grocery stores across 12 large Census Metropolitan Areas (CMA) in Canada. We find that accessibility levels are on average comparable to those prior to the pandemic, however, in several cases accessibility changed in uneven ways across income groups, especially with regard to employment. 
+ 
+```{r} 
+#| label: prepare_df_transit 
+#| echo: false 
+#| message: false 
+#| warning: false 
+
+df_transit <- transit_statistics |>  
+  mutate(date = REF_DATE, 
+         month = month(date)) 
+``` 
+ 
+```{r} 
+#| label: fig-ridership-revenue 
+#| fig-cap: "Transit revenue and ridership in Canada, pre- and post- first-wave COVID-19 pandemic." 
+#| fig-subcap: Data source @governmentofcanada2024 
+#| out-width: 100% 
+#| echo: false 
+ 
+df_transit |> 
+         filter(GEO == "Canada") |>
+  pivot_longer(cols = c(Revenue, Ridership),
+               names_to = "var",
+               values_to = "value") |>
+  ggplot(aes(x = date,  
+           y = value, 
+           color = var)) +  
+  geom_line(linewidth = 1) + 
+  ylab("count") + 
+  scale_color_discrete(name = "Total in millions") + 
+  guides(color = guide_legend(nrow=2, 
+                           byrow=TRUE)) + 
+  theme_minimal() +  
+  theme(legend.position = "bottom") 
+``` 
+ 
+# Data and Methods 
+ 
+The study areas for this work consist of the 12 largest urban regions across Canada based on their 2021 population counts (@tbl-table_1). This includes the 12 largest CMAs as well as Oshawa, Ontario and Abbotsford-Mission, British Columbia. The former is included as part of the larger Greater Toronto Area study region, while the latter is included as part of the Vancouver study region as it is home to a transit station on the region's West Coast Express commuter rail line. 
+ 
+```{r} 
+#| label: tbl-table_1 
+#| tbl-cap: "Census Metropolitan Areas (CMAs) by Population and Transit Modes" 
+#| echo: false 
+ 
+population_statistics |>
+  filter(year == "2021") |>
+  arrange(size_rank) |>
+  select(-year) |>
+  gt() |>  
+  cols_label(size_rank ="Size Rank",
+             cma_name = "CMA Name",
+             province = "Province",
+             population = "Population (2021)") |>
+  fmt_number(columns = "population", 
+             use_seps = TRUE, 
+             decimals = FALSE) |>  
+  tab_options( 
+    #table.font.size = 8,  
+    table.width = pct(100) 
+    ) 
+``` 
+ 
+Conventionally, accessibility is a measure of the number of reachable destinations from a given origin, given the cost of reaching them using the transportation network. Accessibility takes the following mathematical form: 
+ 
+$$ 
+A_i^{tk}=\sum_{j}O_j^k \cdot f^{k}(c^{t}_{ij}) 
+$$ 
+ 
+where: 
+ 
+-   $A_i$: accessibility at origin $i$
+-   $O_j$: weight of the opportunity at destination $j$
+-   $c_{ij}$: travel cost between origin and destination
+-   $k$: opportunity types, either $job$ or $grocery$ in this study
+-   $t$: time period, either $2019$ or $2023$ in this study
+ 
+Within this framework, the public transit accessibility $A$ for an origin location $i$ in time period $t$ is the weighted sum of the opportunities $O$ of type $k$ at the destination locations $j$. The opportunities are weighted by an opportunity-specific function $f^{k}(*)$ of cost $c^{t}_{ij}$ for year $t$. For this work, the origins consist of the geographic centroids of the Dissemination Areas (DAs) from the 2021 Canadian Census of Population for all 12 study regions.   
+
+We estimate accessibility for two types of destinations, jobs and grocery stores. For jobs, we used DA centroids weighted by the number of workplace locations from the 2021 Census. In other words, each job destination is a DA with value $O_j^{job}$ representing number of workplace locations. For grocery stores, we used locations from the DMTI's Enhanced Points of Interest database filtered by their grocery store associated code (North American Industry Classification System (NAICS) and the Standard Industrial Classification (SIC) code). Each grocery store is assumed to have a weight of 1 to represent each $O_j^{grocery}$. The years $t$ represent travel scenarios in 2019 and 2023 to capture transit travel times before and after the pandemic. As the aim of this study is to isolate the changes in accessibility between 2019 and 2023, we use the same origin locations, destination locations, and opportunity weights for both years.
+
+To calculate public transit travel times, we used the {r5r} R package [@pereira2021]. We collected the General Transit Feed Specification (GTFS) transit schedule files and street networks from OpenStreetMap for the 12 analysis regions for both time periods. In accordance with each amenity type, we chose the travel time and day of the week that corresponded to the times when most people would visit this type of amenity. So for grocery stores, we selected a departure date time on a weekend afternoon (more specifically, we set the routing function's time for a departure between 12:00 PM to 12:15 PM on April 20, 2019 and April 22, 2023). For employment, we ran the analysis on a typical weekday morning rush-hour commute (specifically, 8:00 to 8:15 AM departure on Tuesday April 16, 2019 and Tuesday April 18, 2023). One exception to this is Quebec City, where the routing for 2019 occurs on a Saturday and Tuesday in June (instead of April) due to the GTFS data unavailability. Walking from origin to transit stop, and from transit stop to destination, is assumed.
+
+Finally, we assigned travel weights to each destination’s travel time according to their distance to each origin. Meaning, opportunities closer to each origin’s location had greater travel weights, while those farther away had smaller travel weights. We used different weight (travel decay) functions according to the opportunity types following the literature. For employment, we used the weights functions calibrated for most of the regions from [@kapatsila2023]. However, because impedance functions for Ottawa-Gatineau, Calgary, Hamilton, and Kitchener-Cambridge-Waterloo were not included in this work, we used mean commute times by transit and parameters from similarly-sized cities to calculate access in these regions. For grocery stores, we adopted the function from [@kwan1998] with a decay parameter of 180. Both travel decay functions are visualised in @fig-toronto_impedance_plot, note how the travel weight to jobs declines less dramatically at the same travel time than to grocery stores. This trend reflects how populations typically travel to these different amenity types.
+ 
+```{r} 
+#| label: prepare_toronto_impedance_plot 
+#| echo: false 
+impedance_df <- tidyr::expand_grid( 
+  study_region_name = study_region_names_list, 
+  travel_time_p50 = seq(0, 120, by = 1), 
+  opportunity_type = c("Jobs", "Grocery"), 
+ opportunity_weight = 1  
+) |>  
+  filter(study_region_name == "Toronto") |>  
+  mutate( 
+    impedance_weight = case_when( 
+      opportunity_type == "Jobs" ~ opportunity_weight * (1 / (1 + (travel_time_p50 / 49) ^ 4.4856)), 
+      .default = exp(-travel_time_p50 ^ 2 / 180) 
+    ) 
+  ) 
+   
+toronto_impedance_plot <- impedance_df |>  
+  ggplot(aes(x = travel_time_p50, y = impedance_weight, colour = opportunity_type)) +  
+  geom_line() + 
+  scale_y_continuous( 
+    name = "impedance weight" 
+  ) + 
+  scale_x_continuous( 
+    name = "travel time (minutes)", 
+    breaks = seq(0, 120, by = 30) 
+  ) + 
+  scale_colour_discrete(" ", type=c("tan1", "lightseagreen")) + 
+  theme_minimal() + 
+  theme( 
+    #strip.background = element_blank(), strip.placement = "outside", 
+    legend.position = "top", 
+      legend.title=element_blank()) 
+ 
+ggsave(toronto_impedance_plot, 
+       file = glue::glue(here::here(),
+                         "/figures/toronto_impedance_plot.jpg"), 
+       height = 4, 
+       width = 8) 
+``` 
+ 
+```{r} 
+#| label: fig-toronto_impedance_plot 
+#| fig-cap: "Impedance Functions used for Employment and Grocery Store Access in Toronto" 
+#| out-width: 100% 
+#| echo: false 
+knitr::include_graphics(glue::glue(here::here(),
+                         "/figures/toronto_impedance_plot.jpg")) 
+``` 
+ 
+Taken together, by holding the origins, destinations, and weighting functions constant over time, we aimed to isolate how changes in transit service and travel times affected accessibility between 2019 and 2023 in each Dissemination Area from the 12 cities. We base the next section’s analyses on the relative percentage change in accessibility from 2019 to 2023.  
+
+# Results 
+ 
+```{r}
+#| label: impedance for employment analysis
+
+#Assigning employment related travel impedance weights, for now, for transit mode in Kapitllian et al. 2023 is used
+travel_matrix_employ <- travel_matrix_employ |>  mutate(
+    f = case_when(
+      study_region_name == "Calgary" ~  (1 / (1 + (travel_time_p50 / 41.6) ^ 5.0643)),
+      study_region_name == "Edmonton" ~  (1 / (1 + (travel_time_p50 / 53) ^ 5.0643)),
+      study_region_name == "Toronto" ~ (1 / (1 + (travel_time_p50 / 49) ^ 4.4856)),
+      study_region_name == "Halifax" ~  (1 / (1 + (travel_time_p50 / 49) ^ 4.2019)),
+      study_region_name == "London" ~ (1 / (1 + (travel_time_p50 / 47) ^ 4.6801)),
+      study_region_name == "Montréal" ~ (1 / (1 + (travel_time_p50 / 44) ^ 4.1168)),
+      study_region_name == "Ottawa" ~  (1 / (1 + (travel_time_p50 / 42.2) ^ 5.0643)),
+      study_region_name == "Québec City" ~ (1 / (1 + (travel_time_p50 / 49) ^ 4.1947)),
+      study_region_name == "Vancouver" ~ (1 / (1 + (travel_time_p50 / 45) ^ 4.1339)),
+      study_region_name == "Winnipeg" ~ (1 / (1 + (travel_time_p50 / 45) ^ 4.6869)),
+      study_region_name == "Hamilton" ~ (1 / (1 + (travel_time_p50 / 50) ^ 4.6869)),
+      study_region_name == "Waterloo" ~ (1 / (1 + (travel_time_p50 / 40.3) ^ 4.6801)),
+      .default = 9999
+    ))
+```
+
+```{r}
+#| label: accessibility to employment
+
+#calculating Hansen-type spatial accessibility, sum of (f*opportunities) for each origin (from_id) to all destination (possible to_ids)
+
+# 2019
+access_employ_2019 <- travel_matrix_employ |>
+  filter(start_year == 2019) |>
+  group_by(from_id) |> 
+  summarise(S_i = sum(f*Total_Emp))
+
+# 2023
+access_employ_2023 <- travel_matrix_employ |>
+  filter(start_year == 2023) |>
+  group_by(from_id) |> 
+  summarise(S_i = sum(f*Total_Emp))
+
+# #inspect:
+# access_employ_2019$S_i |> summary()
+# access_employ_2023$S_i |> summary()
+# 
+# #also adding per capita spatial accessibility 
+# spatial_mea_employ_2019_DA <- spatial_mea_employ_2019_DA |> left_join(access_employ_2019, by="from_id") |>
+#   mutate(s_i = S_i/Population)
+# spatial_mea_employ_2023_DA <- spatial_mea_employ_2023_DA |> left_join(access_employ_2023, by="from_id") |>
+#   mutate(s_i = S_i/Population)
+```
+
+```{r}
+#| label: impedance for groceries analysis
+
+# Assigning grocery store related travel impedance weights, for now, from Kwan 1998
+b0 <- 180
+travel_matrix_grocer <- travel_matrix_grocer |>  
+  mutate(
+    o_j = 1, # opportunity intensity of each grocery store is 1
+    f = exp(-travel_time_p50 ^ 2 / b0) #informed by Kwan 1998) 
+    )
+```
+
+```{r}
+#| label: accessibility to groceries
+
+# 2019
+access_grocers_2019 <- travel_matrix_grocer |>
+  filter(start_year == 2019) |>
+  group_by(from_id) |> 
+  summarise(S_i = sum(f*o_j))
+
+# 2023
+access_grocers_2023 <- travel_matrix_grocer |> 
+  filter(start_year == 2023) |>
+  group_by(from_id) |> 
+  summarise(S_i = sum(f*o_j))
+
+# #also adding per capita spatial accessibility 
+# spatial_mea_grocers_2019_DA <- spatial_mea_grocers_2019_DA |> 
+#   left_join(access_grocers_2019, 
+#             by="from_id") |>
+#   mutate(s_i = S_i/Population)
+# spatial_mea_grocers_2023_DA <- spatial_mea_grocers_2023_DA |> 
+#   left_join(access_grocers_2023, by="from_id") |>
+#   mutate(s_i = S_i/Population)
+```
+
+```{r}
+#| label: prepare DA data
+
+census_data_da <- census_data_da |> 
+  st_as_sf() |> 
+  st_transform(crs = 3347) |> 
+  mutate(area = st_area(geometry),
+         area_km = units::set_units(area, km^2),
+         pop_emp_dens_km = (Population + Total_Emp) / area_km,
+         area_ha = units::set_units(area, ha),
+         pop_emp_dens_ha = (Population + Total_Emp) / units::drop_units(area_ha)) |> 
+  st_make_valid() |> 
+  st_transform(crs = 4326) |> 
+  filter(pop_emp_dens_ha >= 1)
+```
+
+```{r}
+#| label: prepare table with accessibility to employment
+
+census_data_da_emp <- census_data_da |> 
+  select(GeoUID,
+         region,
+         Population, 
+         mhh_inc,
+         study_region_name) |> 
+  left_join(
+    access_employ_2019 |>
+      rename(
+        GeoUID = from_id,
+        S_i_2019 = S_i,
+      ),
+    by = "GeoUID"
+  ) |> 
+  left_join(
+    access_employ_2023 |>
+      rename(
+        GeoUID = from_id,
+        S_i_2023 = S_i,
+      ),
+    by = "GeoUID"
+  ) |> 
+  mutate(S_i_diff = S_i_2023 - S_i_2019,
+         S_i_change = ((S_i_2023 - S_i_2019) / S_i_2019)*100) |> 
+  group_by(region) |>   # Group by region
+  mutate(
+    quintiles_region = case_when(
+      is.na(mhh_inc) ~ "NA",
+      mhh_inc <= quantile(mhh_inc, 0.2, na.rm = TRUE) ~ "Lowest",
+      mhh_inc <= quantile(mhh_inc, 0.4, na.rm = TRUE) ~ "Low",
+      mhh_inc <= quantile(mhh_inc, 0.6, na.rm = TRUE) ~ "Middle",
+      mhh_inc <= quantile(mhh_inc, 0.8, na.rm = TRUE) ~ "High",
+      TRUE ~ "Highest"
+    )) |>   # Create income categories
+  ungroup()  |> 
+  mutate(
+    quintiles_region = fct_relevel(quintiles_region, "Highest", "High", "Middle", "Low", "Lowest"),
+    S_i_change_woutliers = S_i_change,
+    S_i_change = case_when(
+      S_i_change > 50 ~ 50, 
+      S_i_change < -50 ~ -50, 
+      .default = S_i_change))
+```
+
+```{r}
+#| label: prepare table with accessibility to groceries
+census_data_da_groc <-  census_data_da |> 
+  select(GeoUID,
+         region,
+         Population, 
+         mhh_inc,
+         study_region_name) |> 
+  left_join(
+    access_grocers_2019 |>
+      rename(
+        GeoUID = from_id,
+        S_i_2019 = S_i,
+      ),
+    by = "GeoUID"
+  ) |> 
+  left_join(
+    access_grocers_2023 |>
+      rename(
+        GeoUID = from_id,
+        S_i_2023 = S_i,
+      ),
+    by = "GeoUID"
+  ) |> 
+  mutate(S_i_diff = S_i_2023 - S_i_2019,
+         S_i_change = ((S_i_2023 - S_i_2019) / S_i_2019)*100) |> 
+  group_by(region) |>   # Group by region
+  mutate(
+    quintiles_region = case_when(
+      is.na(mhh_inc) ~ "NA",
+      mhh_inc <= quantile(mhh_inc, 0.2, na.rm = TRUE) ~ "Lowest",
+      mhh_inc <= quantile(mhh_inc, 0.4, na.rm = TRUE) ~ "Low",
+      mhh_inc <= quantile(mhh_inc, 0.6, na.rm = TRUE) ~ "Middle",
+      mhh_inc <= quantile(mhh_inc, 0.8, na.rm = TRUE) ~ "High",
+      TRUE ~ "Highest"
+    )) |>   # Create income categories
+  ungroup()  |> 
+  mutate(
+    quintiles_region = fct_relevel(quintiles_region, "Highest", "High", "Middle", "Low", "Lowest"),
+    S_i_change_woutliers = S_i_change,
+    S_i_change = case_when(
+      S_i_change > 50 ~ 50, 
+      S_i_change < -50 ~ -50, 
+      .default = S_i_change))
+
+```
+
+@fig-S_i_groc_change_map shows the spatial distribution of changes in accessibility to grocery stores within each region. We set values above or below 50% to $\pm50$% in relative change in accessibility to reduce the effects of outliers on the visualisations below. These exceptionally large percent changes correspond to about 5% (job), and 15% (grocery) of the DAs. Most DA’s that experienced reductions in food access are in regional centers, while gains are distributed predominantly across peripheries. The notable exception seems to be Waterloo. The concentrations of accessibility losses in downtowns are particularly visible in the three largest cities in the country, namely Toronto, Montréal, and Vancouver. Who typically live in downtown areas in Canadian cities? Middle- to low-income households.
+ 
+```{r}
+#| label: plot and save fig-S_i_groc_change_map 
+#| cache: true
+
+census_data_da_groc_sf <- census_data_da_groc |> 
+  drop_na(S_i_change) |> 
+  filter(!sf::st_is_empty(geometry), !GeoUID %in% da_omit_list) |> 
+  sf::st_cast("MULTIPOLYGON") |> 
+  sf::st_cast("POLYGON")
+
+S_i_groc_change_map <- tm_shape(census_data_da_groc_sf) + tm_fill(col = "grey") +
+      tm_shape(region_backgrounds) + tm_fill(col = "grey95") +
+      tm_shape(census_data_cma) + tm_fill(col = "grey90") +
+      tm_shape(census_data_da_groc_sf) +
+      tm_fill(
+        col = "S_i_change",
+        style = "fisher",
+        n = 10,
+        midpoint = 0,
+        palette = "RdYlGn",
+        title = "Change in \nGrocery Store \nAccess (%)",
+        colorNA = NULL,
+        showNA = FALSE
+      ) +
+      tm_facets(by = "study_region_name",
+                free.coords = TRUE,
+                ncol = 3) +
+      tm_scale_bar(
+        position = c("right", "bottom"),
+        text.color = "black",
+        breaks = c(0, 5, 10)
+      ) +
+      tm_layout(
+        #bg.color = "#1E2323",
+        outer.bg.color = "white",
+        #title = y,
+        #legend.text.color = "white",
+        legend.format = list(digits = 2),
+        title.color = "white",
+        between.margin = 0.2,
+        panel.label.bg.color = "white",
+        #panel.label.color = "white"
+        frame = TRUE)
+
+tmap_save(S_i_groc_change_map, 
+          filename = glue::glue(here::here(),
+                                "/figures/S_i_groc_change_map.jpg"), 
+          dpi = 300, 
+          width = 8, 
+          height = 12)
+```
+
+```{r} 
+#| label: fig-S_i_groc_change_map 
+#| fig-cap: "Spatial distribution of changes in transit accessibility to grocery stores by region, 2019 to 2023" 
+#| out-width: 100% 
+
+knitr::include_graphics(glue::glue(here::here(),
+                                "/figures/S_i_groc_change_map.jpg")) 
+``` 
+ 
+@fig-S_i_emp_change_map displays the spatial distribution of changes in accessibility but to job opportunities. In some cities, the largest losses or gains in accessibility (shown by darker shades of reds and greens, respectively) are concentrated in the CMA peripheries. That is the case for Toronto, Calgary, Edmonton, and Hamilton. This outcome is somewhat expected because the outer edges of metropolitan areas usually have less dense transit networks compared to downtown areas. Consequently, any increase or reduction in service is likely to have a greater impact in the fringes than in the well-served cores. Thus, people who live in these cities’ suburbs are more susceptible to changes in service levels than those located in the centers. This can be particularly relevant for suburban low-income families who depend on public transit to access essential services. It is also worth noting, however, that DAs in the peripheries often cover larger geographic areas but are sparsely populated when compared to regions’ cores. 
+
+```{r}
+#| label: plot and save fig-S_i_emp_change_map 
+#| cache: true
+
+census_data_da_emp_sf <- census_data_da_emp |> 
+  drop_na(S_i_change) |> 
+  filter(!sf::st_is_empty(geometry), !GeoUID %in% da_omit_list) |> 
+  sf::st_cast("MULTIPOLYGON") |> 
+  sf::st_cast("POLYGON")
+
+S_i_emp_change_map <- tm_shape(census_data_da_emp_sf) + tm_fill(col = "grey") +
+      tm_shape(region_backgrounds) + tm_fill(col = "grey95") +
+      tm_shape(census_data_cma) + tm_fill(col = "grey90") +
+      tm_shape(census_data_da_emp_sf) +
+      tm_fill(
+        col = "S_i_change",
+        style = "fisher",
+        n = 10,
+        midpoint = 0,
+        palette = "RdYlGn",
+        title = "Change in \nEmployment \nAccess (%)",
+        colorNA = NULL,
+        showNA = FALSE
+      ) +
+      tm_facets(by = "study_region_name",
+                free.coords = TRUE,
+                ncol = 3) +
+      tm_scale_bar(
+        position = c("right", "bottom"),
+        text.color = "black",
+        breaks = c(0, 5, 10)
+      ) +
+      tm_layout(
+        #bg.color = "#1E2323",
+        outer.bg.color = "white",
+        #title = y,
+        #legend.text.color = "white",
+        legend.format = list(digits = 2),
+        title.color = "white",
+        between.margin = 0.2,
+        panel.label.bg.color = "white",
+        #panel.label.color = "white"
+        frame = TRUE)
+
+tmap_save(S_i_emp_change_map, 
+          filename = glue::glue(here::here(),
+                                "/figures/S_i_emp_change_map.jpg", 
+                                dpi = 300, 
+                                width = 8, 
+                                height = 12))
+```
+ 
+```{r} 
+#| label: fig-S_i_emp_change_map 
+#| fig-cap: "Spatial distribution of changes in transit accessibility to employment by region, 2019 to 2023" 
+#| out-width: 100% 
+#| echo: false 
+ 
+knitr::include_graphics(glue::glue(here::here(),
+                                "/figures/S_i_emp_change_map.jpg"))
+``` 
+ 
+<!--Antonio... do you think it's worth adding "The plot for each city has their own scale because it allows the comparison between cities and the analysis of their trends." The reviewer wanted some sort of mention of this... but I don't think its needed really.-->
+To explore the distribution of these changes at the population level, @fig-S_i_groc_emp_change_density_plot plots the distribution of accessibility changes to grocery shops (green) and jobs (orange) by the population (per million) across the 12 regions. The plot provides an overview of how accessibility has changed between these two representative travel periods and purposes: access to jobs on a weekday morning (2019 vs. 2023) and access to grocery stores on a weekend afternoon (2019 vs. 2023). While the majority of people in each region did not see any difference in transit access to the two types of amenities, a sizable amount did. For both amenities, Toronto, Montréal and Calgary had a significant proportion of the population experiencing a decline in transit accessibility in 2023. Variations in accessibility changes by amenity type are also evident. For example, in Vancouver, there are accessibility gains to jobs but losses in access to groceries. Losses in access to grocery in especially Toronto, Montréal, Calgary and Vancouver, as noted in our work, is in line with previous studies that showed reductions in food access within large Canadian cities. 
+ 
+Similarly, for Edmonton and Hamilton in @fig-S_i_groc_emp_change_density_plot, while accessibility changes to jobs show a right-skewed distribution (indicating accessibility gains), access to grocery stores is more evenly distributed between gains and losses. Conversely, Ottawa and Winnipeg display left-skewed changes in job accessibility (indicating losses), but accessibility to grocery stores is more balanced between losses and gains. The remaining regions, i.e., Quebec City, Waterloo, London and Halifax, have a similar distribution of access changes in terms of losses and gains. 
+ 
+ 
+```{r}
+census_data_da_emp_job <- rbind(census_data_da_emp |> 
+                                  mutate(type = "Jobs"), 
+                                census_data_da_groc |> 
+                                  mutate(type = "Grocery"))
+options(scipen=10000)
+```
+ 
+ 
+```{r}
+#| label: create and save fig-S_i_groc_emp_change_density_plot 
+
+S_i_groc_emp_change_density_plot <- ggplot(census_data_da_emp_job |> 
+         filter(quintiles_region != "NA")
+         #mutate(access_change_groc = ifelse(access_change_groc > 50, 50, access_change_groc)) 
+       , aes(x = S_i_change, fill = type)) +
+  geom_density(aes(y=..count../100,weight=Population), alpha=0.65, col=NA) +
+  facet_wrap(~ study_region_name, scales = "free") +  # Facet by region
+  scale_fill_discrete(" ", type=c("lightseagreen","tan1"))+
+  labs(
+    x = "Change in accessibility (%)",
+    y = "Population (per million)"
+  ) +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::comma)+
+  scale_x_continuous(limits = c(-50, 50), labels = c(-50, -25, 0, 25, 50)) +
+  theme(
+    strip.text = element_text(size = 12),
+    legend.position = "bottom"  # Removes legend since facetting is done by region
+  ) 
+
+ggsave(S_i_groc_emp_change_density_plot, 
+       filename = glue::glue(here::here(),
+                                "/figures/S_i_groc_emp_change_density_plot.jpg"),
+       dpi = 300, 
+       width = 8, 
+       height = 6)
+```
+
+
+```{r} 
+#| label: fig-S_i_groc_emp_change_density_plot 
+#| fig-cap: "Density plots of accessibility changes to employment and grocery stores by region, 2019 to 2023" 
+#| out-width: 100% 
+#| echo: false 
+ 
+knitr::include_graphics(glue::glue(here::here(),
+                                "/figures/S_i_groc_emp_change_density_plot.jpg")) 
+``` 
+ 
+Next, we examine the composition of income-levels in DAs that experienced changes in accessibility. The income brackets are based on a quintile distribution of median household incomes (at the DA level) calculated separately for each metropolitan area. The @fig-S_i_groc_emp_change_quantile_plot highlights differences across income levels by using population-weighted changes to show which income groups benefited or were disadvantaged by accessibility changes. In Hamilton, for instance, there is a direct relationship between the income brackets and changes in transit access, where lower-income residing groups are disadvantaged, while higher-income residing groups benefit from changes in accessibility. 
+ 
+For grocery access in @fig-S_i_groc_emp_change_density_plot, lower-income groups (i.e., Lowest and/or Low) tend to reside in areas that saw a decline in transit accessibility in most regions, except Ottawa, Quebec City, Waterloo and London. These declines are more pronounced in regions like Montréal, Vancouver, Edmonton and Halifax where lower-income groups are disproportionately impacted while higher-income groups experienced either stable or improved accessibility. Similar trends can be seen for job access; lower-income groups tended to reside in areas that saw gains in access in 7 out of 12 regions (Vancouver, Edmonton, Quebec City, Hamilton, Waterloo, London and Halifax). Accessibility gains are generally lower in areas where higher-income groups reside, except in Waterloo, where lower-income residing groups saw comparable gains. 
+ 
+```{r}
+#| label: create and save fig-S_i_groc_emp_change_quantile_plot 
+
+S_i_groc_emp_change_quantile_plot <- census_data_da_emp_job |> 
+  st_drop_geometry() |> 
+  filter(quintiles_region != "NA") |> 
+  group_by(study_region_name, quintiles_region, type) |> 
+  summarize(S_i_change = weighted.mean(S_i_change, Population, na.rm = TRUE),
+            type = first(type),
+            .groups = "drop") |> 
+  ggplot(aes(x = quintiles_region, y = S_i_change, colour = type)) +
+  geom_point() +
+    scale_x_discrete(limits=rev)+
+  facet_grid(cols = vars(study_region_name)) +
+  scale_color_discrete(" ", type=c("lightseagreen","tan1"))+
+  labs(
+    x = "Median Income Quantile",
+    y = "Population-weighted Mean Change \nin Accessibility (%)",
+    #title = "Access Change vs Household Income by Study Region"
+  )  +
+  geom_hline(yintercept = 0,color = "grey75") +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5, 
+                                   hjust=1),
+        panel.border = element_rect(colour = "black",
+                                    fill=NA, 
+                                    size=1)) +
+  facet_wrap(~ study_region_name,
+              nrow = 3)
+  
+ggsave(S_i_groc_emp_change_quantile_plot, 
+       filename = glue::glue(here::here(),
+                                "/figures/S_i_groc_emp_change_quantile_plot.jpg"), 
+       dpi = 300, 
+       width = 8, 
+       height = 6)
+```
+
+
+```{r} 
+#| label: fig-S_i_groc_emp_change_quantile_plot 
+#| fig-cap: "Average population-weighted accessibility changes by DA median household income quintile" 
+#| out-width: 100% 
+#| echo: false 
+ 
+knitr::include_graphics(glue::glue(here::here(),
+                                "/figures/S_i_groc_emp_change_quantile_plot.jpg"))
+``` 
+ 
+# Conclusions 
+ 
+Public transit services and its ridership experienced setbacks as a result of the COVID-19 pandemic. In North America, where automobiles are the primary means of transportation, people who depend on transit to access opportunities are especially susceptible to disruptions in local public transit networks. This dependence is even more pronounced in certain situations, such as traveling to grocery stores. For instance, only 5% of Canadians use public transit for grocery shopping compared to 83% by car and 10% on foot. Lower-income households, non- or low- vehicle owning households, or those who cannot drive for whatever reason, tend to use public transit for this trip purpose and are more vulnerable to additional travel time and monetery costs due to public transit service reductions [@competitionbureauCanadaNeedsMore2024]. Meaning, worse accessibility to groceries can impose additional barriers to these vulnerable households and result in negative social outcomes. For individuals who commute daily to their jobs, reductions in service levels mean greater travel times and less flexibility in their routine. Thus, if transit agencies now operate at lower ridership levels because of the long-term effects of the pandemic shock, this new normal is potentially pernicious for people’s wellbeing. A new ridership plateau may also entail a reduction of the financial viability of transit agencies in the longer term, considering the known effect of a "transit death spiral". 
+ 
+In this report, we investigated whether and how transit service levels recovered from the pandemic shock, what this recovery —or lack thereof— meant for people' accessibility, and how these changes were dispersed across geographic and income levels. To achieve these objectives, we explored the trends in accessibility changes to grocery shops and job across the 12 largest Census Metropolitan Areas in Canada pre- and post- pandemic mitigation measures. We investigated how the gains and losses were distributed, on average, across income groups. Finally, we mapped how these relative changes were spatially distributed within each city. Our findings can be summarized as follows. 
+ 
+At first glance, our results show that many people now face similar accessibility levels than the ones experienced before the pandemic. The distributions of relative percentage changes in accessibility shown in @fig-S_i_groc_emp_change_density_plot seem to concentrate around the middle, meaning that multiple residents faced little accessibility gains or losses at the end of the period. On an aggregate scale, it seems, service and the resulting accessibility levels did not suffer drastic alterations from the period before the pandemic to now. That, however, is not the full picture. 
+ 
+On closer inspection, accessibility did, in fact, change for many. Overall, when considering accessibility to jobs, losses were especially common in the largest cities – Toronto, Montréal, Vancouver, Calgary, and Ottawa. Other cities saw some aggregate gains, notably Edmonton, Québec City, Hamilton, Waterloo, and London. Variations in accessibility to grocery shops were less pronounced compared to employment, but changes generally trended towards losses rather than gains. Particularly, Toronto, Montréal, and Vancouver experienced aggregate reductions in grocery stoer access throughout the period under examination. Additionally, when examining how these changes were distributed across income levels, these changes appear to be tied to issues of equity. 
+ 
+Our results show that in most regions (except for Calgary and Waterloo), people from the middle- to lowest-income quantiles suffered the greatest proportion of losses in accessibility. Meanwhile, the high- and highest-income quantiles experienced little reductions in accessibility or even accrued accessibility gains throughout the period. In other words, it seems that where service and accessibility levels did decline, those who endured these reductions belong to the lower-income groups. In contrast, where accessibility improved, those who benefited from these improvements belong to the top of the income distribution. Our findings suggest that the pandemic may have widened the transportation infrastructure gap for some, but not all Canadians. And that condition seemed to correlate with, among other factors, income. In the largest 12 Canadian cities, reductions in public transit supply disproportionately affected regions mostly inhabited by low-income households, who have historically made up a larger share of transit users. Meaning, those who heavily depend on transit to access essential services are the ones who now face worse conditions. These declines in accessibility may create transportation barriers for these groups, which can be particularly challenging in the economic hardship following the pandemic.  
+ 
+Spatially, accessibility changes were distributed unevenly across cities, without a distinct pattern but showing potential ties to city size. Our results suggest that the post-pandemic transportation responses and the resulting service levels were shaped at the local level, as each city has its own spatial organization of jobs and grocery establishments. We have highlighted specific spatial patterns throughout the text. For example, larger shifts in accessibility occurred in the outskirts of Toronto, Calgary, Edmonton and Hamilton. A more integrated approach to transportation policies and the financing of public transit agencies - one that involves municipal, provincial, and federal levels of government - could potentially address these accessibility disparities more evenly. Furthermore, to improve our knowledge of the matter, subsequent work can evaluate if there is a significant statistical association between these accessibility changes and spatial characteristics, to determine if the location of these losses or gains are randomly distributed or tied to the spatial distribution of the opportunities and the transit network of each city. 
+ 
+Moreover, our findings suggest that on aggregate, transit service recovered across Canadian cities to provide similar accessibility levels to many residents -- but by no means for all. There are substantial segments of the population who experienced reductions in accessibility, particularly to employment. These losses could be associated with persistent reduced service levels through weekdays during the morning period. The differences in the behaviour of accessibility to jobs and grocery shops might be related to these opportunities’ spatial distribution within each studied area. Considering that recent research has linked city centers’ recovery rates and their economic character [@forouhar2024], we suggest that further investigation regarding the spatial distribution of jobs and grocery shops considering accessibility changes is needed. 
+ 
+We should note some limitations on our study. First, the accessibility changes investigated here say little about the amount of accessibility currently offered by the public transit system. Our results do not allow us to assess the sufficiency of accessibility levels to employment or grocery shops, neither the degree of inequality with which these levels are distributed across different population groups or throughout space. Future studies derived from this investigation can use more appropriate equity metrics to the domain of transportation, such as the Palma ratio or the concentration index, to quantitative evaluate these changes in accessibility [@karner2024]. We can say, however, that changes derived from the pandemic seemed to have been unequally distributed between income levels. Further investigation is needed to assess how new accessibility levels are tied to sufficiency measures and metrics of justice in transportation [@pot2024; @humberto2023]. Moreover, as mentioned before, we were not able to account for land use and demographic shifts derived from the pandemic due to data unavailability. Furthermore, this paper does not provide an explanation on why passenger ridership and transit agencies revenue are diverging after the pandemic. We show, however, that the decrease in service level has reduced accessibility in many of the largest cities in the country. 
+ 
+Finally, we conclude with some policy remarks. First, we propose that further investigations should evaluate what are the consequences of the widening of the transportation infrastructure gap, and who is most affected by it. Our analysis is preliminary, so other studies can take a deep dive into this issue. For example, future studies can use of qualitative studies to draw insights about different groups’ subjective perspectives on (in)sufficient transit accessibility levels derived from the pandemic and the reduction of public transit service. Additionally, more rigorous quantitative studies using causal inference methodologies can assess the policy impact of these reductions on relevant social outcomes, such as changes in the labour market and food insecurity (given the focus of accessibility to jobs and grocery stores of these report). Future analysis could even broaden the scope and evaluate the consequences of accessibility changes in other outcomes, such as activity participation and social exclusion, and how these impacts are distributed among the population, across spatial locations, and over longer periods of time.  
+
+Second, despite our results being preliminary, they point to a possible "transit death spiral" in some regions. If transit agencies are increasing fare prices and reducing service to compensate for ridership losses, this could bring about a permanent decline in transit ridership and fundamentally compromise transit agencies financial health. This vicious cycle – as indicated in this report – seem to disproportionately affect those most economically vulnerable and dependent on transit services. The responses to this issue are not easy, let alone short-term. For once, one strategy to increase ridership is to provide better services to users. An additional approach is to reduce their cost of using transit, i.e., increasing subsidies for users. The provision of targeted subsidies is widely discussed on equity approaches to transportation, such as providing discounts for users based on their characteristics or on their ride’s characteristics. 
+
+Finally, a more disruptive policy that has gained traction worldwide to tackle the financial root cause fo transit access - the full abolition of public transit fares. The fare-free public transit policy (FFPT) is a politically charged topic and requires a reorganization of public transit’s financing. However, it fundamentally recognizes transit mobility and accessibility as a universal right. It democratizes the use of public transit to every citizen, tying transportation to the right to the city and removing some of the barriers that prevent people from using the services in cities. If the transportation infrastructure gap has indeed widened for some Canadian, a universal approach to removing barriers in accessibility could be the solution to providing equitable access to services across the country. This could help shift the country’s transportation system to a more democratic model, one that supports mobility and opportunities for all Canadians, regardless of social, economic, and spatial disparities.  
+
+# Author Bios:
+
+ 
+João Pedro Parga is a PhD student in the Department of Geography and Planning at the University of Toronto. His work uses quantitative analysis, spatial modeling, and Geographic Information Systems with a focus on helping cities build just transportation systems, addressing distributive justice and equity issues in urban areas.
+
+Anastasia Soukhov is a PhD Candidate in the School of Earth, Environment and Society at McMaster University and holds a MASc, B.Eng in civil (transportation) engineering. Aswell, she is a researcher with the Mobilizing Justice Partnership, working to develop data-driven equity standards for Canadian transportation and city planning practitioners. 
+ 
+Robert Nutifafa Arku is a PhD Candidate in the Department of Geography and Planning at the University of Toronto. His work emphasizes evidence-based equity, investigating how and when public initiatives impact neighborhood dynamics, specifically examining the conditions under which new transportation infrastructure may lead to gentrification and displacement. 
+ 
+Christopher Higgins is an Assistant Professor in the Department of Human Geography at the University of Toronto Scarborough and the Geography and Planning at the University of Toronto. His work uses geocomputational methods to explore the relationship between form and function in cities. Topical interests include accessibility and travel behaviour, spatio-temporal econometrics, health and wellbeing, and urban volumetrics. 
+ 
+Antonio Paez is a full professor in the School of Earth, Environment and Society at McMaster University, where he divides his time between teaching and researching, with a focus on transportation and spatial analysis. He is the 2024 recipient of the Edward L. Ullman Award of the Association of American Geographers, for his lifelong contributions to transportation geography. 
+ 
+# References 
+ 
+
+
+
